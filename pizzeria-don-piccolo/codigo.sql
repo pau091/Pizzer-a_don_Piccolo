@@ -236,14 +236,16 @@ SELECT nombre, stock_actual, stock_minimo
 FROM ingredientes
 WHERE stock_actual < stock_minimo;
 
--- vista desempeños
-
+-- vista desempeños---------------------
 CREATE VIEW vista_desempeno_repartidor AS
-SELECT nombre, entregas_totales
-FROM repartidores
-LEFT JOIN repartidor ON r.p = r.id
-GROUP BY r.p, p.n;
+SELECT nombre, TIMESTAMPDIFF(MINUTE, d.hora_salida, d.hora_entrega) AS promedio_minutos, COUNT(d.id) AS total_entregas
+FROM repartidores r
+JOIN domicilios d ON r.id = d.id
+GROUP BY r.id;
 
+SELECT * FROM  vista_desempeno_repartidor;
+
+-- SELECCION DE TODA LA TALA REPARTIDORES -----
 
 
 -- ============================================================================
@@ -279,17 +281,24 @@ FROM pizzas;
 
 
 -- Consulta de entregas realizadas por cada repartidor con su nombre 
-SELECT * FROM repartidores
-JOIN domicilios ON  domicilios.id = repartidores.id
-GROUP BY domicilios.id;
+SELECT r.nombre, COUNT(*) AS entregas, p.estado_pedido
+FROM  repartidores r
+JOIN pedidos p ON p.id = r.id
+WHERE p.estado_pedido = 'entregado'
+GROUP BY r.nombre;
 
+-- CONSULTA PEDIDOS DEMORADOS de más de 40m  ---- 
+SELECT d.id, estado, TIMESTAMPDIFF(MINUTE, hora_salida, hora_entrega) AS tiempo
+FROM domicilios d
+JOIN repartidores r ON r.id = d.id
+WHERE TIMESTAMPDIFF(MINUTE, d.hora_salida, d.hora_entrega) > 20; 
+-- no se registran pedidos si no se demoran menos de 40 minutos 
 
-SELECT nombre, COUNT(*) repartidores 
+-- repartidores con estado activo que su pedido no fue entregado
 
-
--- CONSULTA PEDIDOS DEMORADOS 
--- SELECT id, hora_salida, hora_entrega TIMESTAMPDIFF(MINUTE, hora_salida, hora_entrega) AS tiempo_demorado
--- FROM domicilios
+SELECT id, estado
+FROM repartidores r
+WHERE estado = 'activo';
 
 
 
